@@ -7,3 +7,9 @@ the game, but for now. this game just a copy of build-in window PC MineSweeper g
 
 This game is fully playable and user can change level though option panel. The functionalities like saving the game and viewing
 past record are still in progress of implementing.
+
+Java version: 
+   java version "1.8.0_172"
+   Java(TM) SE Runtime Environment (build 1.8.0_172-b11)
+   
+Editor: Vim
