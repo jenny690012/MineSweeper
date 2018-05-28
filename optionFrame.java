@@ -7,7 +7,13 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.*;
 import java.util.*;
-
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.util.Scanner;
 
 
 class optionFrame implements ActionListener{
@@ -15,7 +21,14 @@ class optionFrame implements ActionListener{
 	final String BEGINNER= "<html>Beginnner<br>10 mines<br>9x9 grids</html>";
 	final String INTERMEDIATE = "<html>Intermediate<br>40 mines<br>16x16 grids</html>";
 	final String ADVANCED = "<html>Advanced<br>99 mines<br>16x30 grids</html>";
-	final String CUSTOMED = "Customed:";
+	final String CUSTOMED = "Custom:";
+	final String HEIGHT_LABEL="Height (9-24): ";
+	final String WIDTH_LABEL="Width (9-30): ";
+	final String MINE_LABEL="Mines (10-668): ";
+	final String CONTINUE_SAVE_LABEL="Always continue on saved game";
+	final String SAVE_EXIT_LABEL="Always save game on exit";
+	final String APPLY="APPLY";
+	final String CANCEL= "CANCEL";
 	final int MIN_HEIGHT=9;
 	final int MAX_HEIGHT= 24;
 	final int MAX_WIDTH= 30;
@@ -23,6 +36,12 @@ class optionFrame implements ActionListener{
 	final int X_SIZE=400;
 	final int Y_SIZE=400;
 
+	JRadioButton beginnerButn;
+	JRadioButton intermediateButn;
+        JRadioButton advancedButn;
+	JRadioButton customedButn;
+	JCheckBox continueSaved;
+	JCheckBox savedExits;	
 	int num_mines;
 	int cell_height;
 	int cell_width;
@@ -36,70 +55,87 @@ class optionFrame implements ActionListener{
 	int customed_cell_height;
 	int customed_cell_width;
 
+	JButton OK;
+	JButton cancel;
+	JDialog frame;
+	MineSweeper ms;
+
 
    public optionFrame(MineSweeper ms){
 	
-	cell_height= ms.ROWS;
-	cell_width= ms.COLUMS;
-	num_mines= ms.TOTAL_MINE;
-	customed_cell_height= 20;
-	customed_cell_width=20;
-	customed_num_mines=80;
+	this.ms=ms;
+	File options = new File("options.txt");
+	if(options.exists() && !options.isDirectory()){
+	  try{
+		FileReader option = new FileReader(options);
+		BufferedReader reader = new BufferedReader(option);
+		Scanner parser = new Scanner(reader);
 
-	JDialog frame = new JDialog(ms.frame,"Options",Dialog.ModalityType.DOCUMENT_MODAL);
+		cell_height = parser.nextInt();
+		cell_width = parser.nextInt();
+		num_mines = parser.nextInt();
+		continue_save = parser.nextBoolean();
+		save_exit= parser.nextBoolean();
+		customed_cell_height = parser.nextInt();
+		customed_cell_width = parser.nextInt();
+		customed_num_mines = parser.nextInt();
+	    }catch(IOException e){}
+	 }else{	    	
+		cell_height = ms.ROWS;
+		cell_width = ms.COLUMS;
+		num_mines =  ms.TOTAL_MINE;
+		continue_save = ms.continue_on_saved_game;
+		save_exit = ms.save_on_exiting_game;
+		customed_cell_height=0;
+		customed_cell_width=0;
+		customed_num_mines=0;
+	 }
+
+
+	frame = new JDialog(null,"Options",Dialog.ModalityType.DOCUMENT_MODAL);
 	frame.setSize(X_SIZE,Y_SIZE);
 
-	JRadioButton beginnerButn= new JRadioButton(BEGINNER);
+	beginnerButn= new JRadioButton(BEGINNER);
 	beginnerButn.setActionCommand(BEGINNER);
 	beginnerButn.addActionListener(this);
 
-
-	JRadioButton intermediateButn = new JRadioButton(INTERMEDIATE);
+	intermediateButn = new JRadioButton(INTERMEDIATE);
 	intermediateButn.setActionCommand(INTERMEDIATE);
 	intermediateButn.addActionListener(this);
 
-	JRadioButton advancedButn = new JRadioButton(ADVANCED);
+	advancedButn = new JRadioButton(ADVANCED);
 	advancedButn.setActionCommand(ADVANCED);
 	advancedButn.addActionListener(this);
 
-	JRadioButton customedButn = new JRadioButton(CUSTOMED);
+	customedButn = new JRadioButton(CUSTOMED);
 	customedButn.setActionCommand(CUSTOMED);
 	customedButn.addActionListener(this);
 
 	JPanel customfields = new JPanel(new GridLayout(3,2));
-
-
 			
-	JLabel width_label = new JLabel("Width (9-30): ");
+	JLabel width_label = new JLabel(WIDTH_LABEL);
 	width_textfield = new JTextField(2);
+	width_textfield.setActionCommand(WIDTH_LABEL);
+	width_textfield.addKeyListener(new DigitChecker(width_textfield));
+	width_textfield.addActionListener(this);
 	width_label.setLabelFor(width_textfield);
 
-	JLabel height_label = new JLabel("Height (9-24): ");
-	height_textfield = new JTextField(2);
-	height_label.setLabelFor(height_textfield);
 
-	JLabel mine_label = new JLabel("Mines (10-668): ");
+	JLabel height_label = new JLabel(HEIGHT_LABEL);
+	height_textfield = new JTextField(2);
+	height_textfield.setActionCommand(HEIGHT_LABEL);
+	height_textfield.addKeyListener(new DigitChecker(height_textfield));
+	height_label.setLabelFor(height_textfield);
+	height_textfield.addActionListener(this);
+
+
+	JLabel mine_label = new JLabel(MINE_LABEL);
 	mine_textfield = new JTextField(2);
+	mine_textfield.setActionCommand(MINE_LABEL);
+	mine_textfield.addKeyListener(new DigitChecker(mine_textfield));
+	mine_textfield.addActionListener(this);
 	mine_label.setLabelFor(mine_textfield);
 
-	width_textfield.addFocusListener(new FocusListener() {
-      		public void focusGained(FocusEvent e) {}
-      		public void focusLost(FocusEvent e) {
-			customed_cell_width= parseInt(width_textfield,frame, 
-				   MIN_HEIGHT,MAX_WIDTH,
-				   customed_cell_width);}});
-
-	height_textfield.addFocusListener(new FocusListener() {
-      		public void focusGained(FocusEvent e) {}
-      		public void focusLost(FocusEvent e) {
-       			customed_cell_height= parseInt(height_textfield,frame, 
-				MIN_HEIGHT,MAX_HEIGHT,
-				customed_cell_height);}});
-
-	mine_textfield.addFocusListener(new FocusListener() {
-      		public void focusGained(FocusEvent e) {}
-      		public void focusLost(FocusEvent e) {
-       			mineParseInt(frame);}});
 
 	customfields.add(height_label);
 	customfields.add(height_textfield);
@@ -107,8 +143,6 @@ class optionFrame implements ActionListener{
 	customfields.add(width_textfield);
 	customfields.add(mine_label);
 	customfields.add(mine_textfield);
-	setTextFieldsUnfocus();
-
 
 	ButtonGroup g = new ButtonGroup();
 	g.add(beginnerButn);
@@ -117,8 +151,6 @@ class optionFrame implements ActionListener{
 	g.add(customedButn);
 
 		
-
-
 	JPanel difficulty= new JPanel();
 	difficulty.setLayout(new GridBagLayout());
 			
@@ -136,7 +168,6 @@ class optionFrame implements ActionListener{
 
 	radioBnConstr.gridy=1;
 	difficulty.add(intermediateButn,radioBnConstr);
-
 		
 	radioBnConstr.gridy=2;
 	difficulty.add(advancedButn,radioBnConstr);
@@ -154,19 +185,11 @@ class optionFrame implements ActionListener{
 	JPanel setting = new JPanel();
 	setting.setBorder(border);
 	setting.setLayout(new BoxLayout(setting,BoxLayout.Y_AXIS));
-	JCheckBox continueSaved =new JCheckBox("Always continue on saved game",
-						ms.continue_on_saved_game);
-	continueSaved.addItemListener(new ItemListener(){
-		public void itemStateChanged(ItemEvent e) {
-        	 // ms.continue_on_saved_game= continueSaved.isSelected();
-         }});
+	continueSaved =new JCheckBox(CONTINUE_SAVE_LABEL,continue_save);
+	continueSaved.addActionListener(this);
+	savedExits= new JCheckBox(SAVE_EXIT_LABEL,save_exit);
+	savedExits.addActionListener(this);
 
-	JCheckBox savedExits= new JCheckBox("Always save game on exit", 
-			                      ms.save_on_exiting_game);
-	savedExits.addItemListener(new ItemListener(){
-		public void itemStateChanged(ItemEvent e) {
-        	 // ms.save_on_exiting_game= savedExits.isSelected();
-         }});
 
 	setting.add(continueSaved);
 	setting.add(savedExits);
@@ -182,80 +205,30 @@ class optionFrame implements ActionListener{
 					GridBagConstraints.CENTER,
 					GridBagConstraints.BOTH,
 					new Insets(5,10,10,10),X_SIZE,(Y_SIZE/2)-50));
-	JButton OK = new JButton("Apply");
+	JButton OK = new JButton(APPLY);
+	OK.addActionListener(this);
 	frame.add(OK, new GridBagConstraints(1,2,1,1,0.4,0.1,
 					GridBagConstraints.LAST_LINE_END,
 					GridBagConstraints.HORIZONTAL,
 					new Insets(0,0,0,0),X_SIZE/20,20));
 
-	OK.addActionListener(new ActionListener(){
-	        public void actionPerformed(ActionEvent e){
-
-		  int new_cell_height,new_cell_width,new_num_mines;
-		  if(customedButn.isSelected()){
-
-			  new_cell_height= customed_cell_height;
-	      		  new_cell_width = customed_cell_width;			
-			  new_num_mines= customed_num_mines;
-
-		  }else if(beginnerButn.isSelected()){
-		  	   new_num_mines=10;
-	     		   new_cell_height=9;
-	     		   new_cell_width=9;	 
-		  }else if(intermediateButn.isSelected()){
-		  	   new_num_mines=40;
-	     		   new_cell_height=16;
-	     		   new_cell_width=16;	 
-		  }else{
-	     		   new_num_mines=99;
-	     		   new_cell_height=16;
-	     		   new_cell_width=30;		  
-		  }
-
-		  System.out.println("new_cell_height="+new_cell_height);	  
-		  System.out.println("new_cell_width="+new_cell_width);
-		  System.out.println("new_num_mines="+new_num_mines);
-
-		  if(!(new_cell_height==0 || new_cell_width==0 || new_num_mines==0)){
-		  	ms.continue_on_saved_game = continueSaved.isSelected();
-		  	ms.save_on_exiting_game = savedExits.isSelected();
-
-			if(!(new_num_mines == num_mines && new_cell_height== cell_height
-			   && new_cell_width== cell_width)){
-			      ms.change_grid_option(new_cell_height, new_cell_width,
-					 new_num_mines);
-		        }else{ms.resumeFromPause();}
-			frame.dispose();	  
-		  }
-		}});
-
 
 			
-	JButton Cancel = new JButton("Cancel");
-	Cancel.addActionListener(new ActionListener(){
-	        public void actionPerformed(ActionEvent e){
-		 ms.resumeFromPause();
-		 frame.dispose();
-		}});
-			
-	frame.add(Cancel, new GridBagConstraints(2,2,1,1,0.4,0.04,
+	cancel = new JButton(CANCEL);
+	cancel.addActionListener(this);
+	frame.add(cancel, new GridBagConstraints(2,2,1,1,0.4,0.04,
 					GridBagConstraints.LAST_LINE_END,
 					GridBagConstraints.HORIZONTAL,
 					new Insets(0,0,0,10),X_SIZE/20,20));
 
 
 
-
-	mine_textfield.addFocusListener(new FocusListener() {
-      			public void focusGained(FocusEvent e) {}
-      			public void focusLost(FocusEvent e) {
-			  /* mineParseInt(mine_textfield, height_textfield,
-				  	width_textfield, frame);*/}});
-
-
 	setTextFieldsUnfocus();
+	height_textfield.setText(Integer.toString(customed_cell_height));
+	width_textfield.setText(Integer.toString(customed_cell_width));
+	mine_textfield.setText(Integer.toString(customed_num_mines));
 	if(cell_height==9 && cell_width==9 && num_mines==10){
-	        beginnerButn.setSelected(true);	   
+	        beginnerButn.setSelected(true);
 	}else if (cell_height==16 && cell_width==16 && num_mines==40){
 		intermediateButn.setSelected(true);
 	}else if (cell_height==16 && cell_width==30 && num_mines==99){
@@ -263,36 +236,57 @@ class optionFrame implements ActionListener{
 	}else{
 		customedButn.setSelected(true);
 		setTextFieldsFocus();
-		height_textfield.setText(Integer.toString(cell_height));
-	   	width_textfield.setText(Integer.toString(cell_width));;
-	   	mine_textfield.setText(Integer.toString(num_mines));;
 	}
-	System.out.println("cell_height="+cell_height);
-	System.out.println("cell_width="+cell_width);
-	System.out.println("num_mines="+num_mines);
 
-	frame.setResizable(false);
-	frame.setVisible(true);
 	frame.addWindowListener(new java.awt.event.WindowAdapter() {
-    
    	 public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 		ms.resumeFromPause();
 		frame.dispose();
     	 }});
-			
+	frame.setResizable(false);
+	frame.setVisible(true);			
    }
 
-   public void showOptionFrame(){
-
-   
-   }
 
    public void actionPerformed(ActionEvent e){
-	  setTextFieldsUnfocus();
+
+	if(customedButn.isSelected()){ setTextFieldsFocus();}
+	else setTextFieldsUnfocus();
+
+	  
           String command = e.getActionCommand();
-	  if(command.equals(CUSTOMED)){
-	     setTextFieldsFocus();
+	  System.out.println("command="+command);
+	  if(command.equals(HEIGHT_LABEL)){
+	       checkTextfields(true,false,true);
+	  }else if(command.equals(WIDTH_LABEL)){
+	       checkTextfields(true,true,false);
+	  }else if(command.equals(MINE_LABEL)){
+		checkTextfields(false,true,true);
+	  }else if(command.equals(BEGINNER)){
+	  	selectButton( beginnerButn);
+	  }else if(command.equals(INTERMEDIATE)){
+	  	selectButton( intermediateButn);
+	  }else if(command.equals(ADVANCED)){
+	  	selectButton( advancedButn);
+	  }else if(command.equals(CONTINUE_SAVE_LABEL)){
+	  	selectButton(continueSaved);
+	  }else if(command.equals(SAVE_EXIT_LABEL)){
+	  	selectButton(savedExits);
+	  }else if(command.equals(APPLY)){
+	  	clickOnApplyButn();
+	  }else if(command.equals(CANCEL)){
+		ms.resumeFromPause();
+		frame.dispose();
 	  }
+   }
+
+   private void selectButton(JToggleButton bn){
+	boolean all_true=checkTextfields(true,true,true);
+
+	if(!(all_true)){
+	   if(bn.isSelected()) bn.setSelected(false);
+	   else bn.setSelected(true);
+	}
    }
 
    private void setTextFieldsFocus(){
@@ -318,64 +312,199 @@ class optionFrame implements ActionListener{
 	   mine_textfield.setBackground(Color.lightGray);	   
    }
 
+   private void clickOnApplyButn(){
+   	int new_cell_height,new_cell_width,new_num_mines;
+	boolean textfields_correct = checkTextfields(true,true,true);
 
-   private int parseInt(JTextField t,JDialog f, int min, int max, int ori){
+		  if(customedButn.isSelected()&& textfields_correct){
 
-	   int result;
-	   try{
-	      result = Integer.parseInt(t.getText());
-	      if(result > max){
-	        JOptionPane.showMessageDialog(f,
-			"value must be less than "+max,"Out Of Range",
-				   JOptionPane.ERROR_MESSAGE);
-		t.setText(Integer.toString(max));
-		result=max;
-		}else if(result < min){
-	        JOptionPane.showMessageDialog(f,
-			"value must be greater than "+min,"Out Of Range",
-				   JOptionPane.ERROR_MESSAGE);
-		t.setText(Integer.toString(min));
-		result=min;
-	      }
-	   }catch(NumberFormatException e){
-	       JOptionPane.showMessageDialog(f,
-		"Must be numerical characters from 0-1","Unacceptable Character",
-				   JOptionPane.ERROR_MESSAGE);
-	       t.setText(Integer.toString(ori)); result=ori;
-	   }
-   
-	   return result;
+			  new_cell_height= customed_cell_height;
+	      		  new_cell_width = customed_cell_width;			
+			  new_num_mines= customed_num_mines;
+
+		  }else if(beginnerButn.isSelected()){
+		  	   new_num_mines=10;
+	     		   new_cell_height=9;
+	     		   new_cell_width=9;	 
+		  }else if(intermediateButn.isSelected()){
+		  	   new_num_mines=40;
+	     		   new_cell_height=16;
+	     		   new_cell_width=16;	 
+		  }else{
+	     		   new_num_mines=99;
+	     		   new_cell_height=16;
+	     		   new_cell_width=30;		  
+		  }
+
+		  if(textfields_correct){
+			
+		   try{ 
+   			FileWriter options = new FileWriter("options.txt");
+			options.write(Integer.toString(new_cell_height));
+			options.write(String.format("%n"));
+			options.write(Integer.toString(new_cell_width));
+			options.write(String.format("%n"));
+			options.write(Integer.toString(new_num_mines));
+			options.write(String.format("%n"));
+			options.write(Boolean.toString(continueSaved.isSelected()));
+			options.write(String.format("%n"));
+			options.write(Boolean.toString(savedExits.isSelected()));
+			options.write(String.format("%n"));
+			options.write(Integer.toString(customed_cell_height));
+			options.write(String.format("%n"));
+			options.write(Integer.toString(customed_cell_width));
+			options.write(String.format("%n"));
+			options.write(Integer.toString(customed_num_mines));
+			options.close();
+		  }catch(IOException e){
+	 			System.out.print("Write to lastSave.txt failed");
+		  }
+	 
+		  	ms.continue_on_saved_game = continueSaved.isSelected();
+		  	ms.save_on_exiting_game = savedExits.isSelected();
+
+			if (!(new_num_mines == num_mines && 
+			   new_cell_height== cell_height && 
+			   new_cell_width== cell_width)){
+			      ms.change_grid_option(new_cell_height,
+					      new_cell_width,
+					      new_num_mines);
+		        }else{ms.resumeFromPause();}
+			frame.dispose();
+	}
+   }
+
+   private boolean checkTextfields(boolean mine, boolean height, boolean width){
+	boolean mine_check= true;
+	boolean height_check= true;
+	boolean width_check= true;
+
+	if(height) height_check= heightParseInt();
+	if(width) width_check= widthParseInt();
+	if(mine) mine_check= mineParseInt();
+
+	System.out.println("mine_check="+mine_check);
+	System.out.println("height_check="+height_check);
+	System.out.println("width_check="+width_check);
+	return mine_check&&height_check&&width_check;
+
    }
 
 
-   private int mineParseInt(JDialog f){
-
-	   int result;
+   private boolean heightParseInt(){
+   
 	   try{
-	      result = Integer.parseInt(mine_textfield.getText());
+	      customed_cell_height = Integer.parseInt(height_textfield.getText());
+	   }catch(NumberFormatException e){
+		  customed_cell_height=0;
+	   }
+  
+	      if(customed_cell_height > MAX_HEIGHT){
+	        JOptionPane.showMessageDialog(frame,
+			"height value must be less than "+MAX_HEIGHT,
+			"Out Of Range",
+				   JOptionPane.ERROR_MESSAGE);
+		height_textfield.setText(Integer.toString(MAX_HEIGHT));
+		customed_cell_height=MAX_HEIGHT;
+		return false;
+		} else if(customed_cell_height < MIN_HEIGHT){
+	        JOptionPane.showMessageDialog(frame,
+			"height value must be greater than "+MIN_HEIGHT,
+			"Out Of Range",
+				   JOptionPane.ERROR_MESSAGE);
+		height_textfield.setText(Integer.toString(MIN_HEIGHT));
+		customed_cell_height=MIN_HEIGHT;
+		return false;
+	      }
+ 
+	   return true;
+   }
+
+      private boolean widthParseInt(){
+   
+	   try{
+	      customed_cell_width = Integer.parseInt(width_textfield.getText());
+	   }catch(NumberFormatException e){
+		customed_cell_width=0;
+	   }
+	      if(customed_cell_width > MAX_WIDTH){
+	        JOptionPane.showMessageDialog(frame,
+			"width value must be less than "+MAX_WIDTH,
+			"Out Of Range", JOptionPane.ERROR_MESSAGE);
+		width_textfield.setText(Integer.toString(MAX_WIDTH));
+		customed_cell_width=MAX_WIDTH;
+		return false;
+		} else if(customed_cell_width < MIN_HEIGHT){
+	        JOptionPane.showMessageDialog(frame,
+			"width value must be greater than "+MIN_HEIGHT,
+			"Out Of Range", JOptionPane.ERROR_MESSAGE);
+		width_textfield.setText(Integer.toString(MIN_HEIGHT));
+		customed_cell_width=MIN_HEIGHT;
+		return false;
+	      }
+
+   
+	   return true;
+   }
+
+
+   private boolean mineParseInt(){
+
+
+	   try{
+	      customed_num_mines = Integer.parseInt(mine_textfield.getText());
+	   }catch(NumberFormatException e){
+		num_mines=0;
+	   }
 
 	      int max_mines = (customed_cell_height * customed_cell_width *4)/5 ;
-	      if( result < MIN_MINE || result > max_mines){
-	      	JOptionPane.showMessageDialog(f,
+	      if( customed_num_mines < MIN_MINE||customed_num_mines > max_mines){
+	      	JOptionPane.showMessageDialog(frame,
 			"value of mines must be an number between[10-"
 			+max_mines+"] based on current height and cell width.",
 				   "Out of Range",JOptionPane.ERROR_MESSAGE);
-	      	if(result > max_mines){
+	      	if(customed_num_mines > max_mines){
 	           mine_textfield.setText(Integer.toString(max_mines));
-	           result=max_mines;
+		   customed_num_mines=max_mines;
 	      	}else{
 	           mine_textfield.setText(Integer.toString(MIN_MINE));
-	           result=MIN_MINE;		
+	           customed_num_mines=MIN_MINE;		
 		}
+		return false;
 	      }
-	   }catch(NumberFormatException e){
-	       JOptionPane.showMessageDialog(f,
-		"Must be numerical characters from 0-1","Unacceptable Character",
-				   JOptionPane.ERROR_MESSAGE);
-	       mine_textfield.setText(Integer.toString(num_mines));
-	       result=customed_num_mines;
-	   }
-   
-	   return result;
+
+	   return true;
    }
+
+
+	private class DigitChecker implements KeyListener{
+		JTextField tx;
+		String old;
+		public DigitChecker(JTextField tx){
+		    this.tx=tx;
+		}
+   		public void keyTyped(KeyEvent e) {
+			old= tx.getText();
+		}
+    		public void keyReleased(KeyEvent e) {
+			int keycode= e.getKeyCode();
+			System.out.println("keycode="+keycode);
+			if((keycode>=65 && keycode<= 93) || 
+				(keycode<=111 && keycode>=106)){
+				tx.setText(old);
+			       JOptionPane.showMessageDialog(frame,
+			"Must be numerical characters from 0-1",
+			"Unacceptable Character",
+			JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		public void keyPressed(KeyEvent e) {
+			int keycode= e.getKeyCode();
+			if((keycode>=65 && keycode<= 93) || 
+				(keycode<=111 && keycode>=106)){
+				tx.setText(old);
+			}
+		}
+
+	}
 }

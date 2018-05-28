@@ -343,14 +343,12 @@ class CellManager{
 	         try{	
 			System.out.println("cellMeneger.savegame is called");
 			FileWriter saved_game= new FileWriter("Data/save.txt");
-			String x_cord = Integer.toString(ROWS);
-			String y_cord = Integer.toString(COLUMS);
-			String mine_count = Integer.toString(TOTAL_MINE);
-			saved_game.write(x_cord,0,x_cord.length());
+
+			saved_game.write(Integer.toString(mines_count));
 			saved_game.write(String.format("%n"));
-			saved_game.write(y_cord);
+			saved_game.write(Integer.toString(time_so_far));
 			saved_game.write(String.format("%n"));
-			saved_game.write(mine_count);
+			saved_game.write(Integer.toString(cells_count));
 			saved_game.write(String.format("%n"));
 
 			String cell_info;
@@ -375,24 +373,22 @@ class CellManager{
 			BufferedReader reader = new BufferedReader(saved_game);
 			Scanner parser = new Scanner(reader);
 			
-			int x= parser.nextInt();
-			int y= parser.nextInt();
-			int mine_count = parser.nextInt();
-			ROWS=x;COLUMS=y;TOTAL_MINE=mine_count;
-			mine_timer.cancel();
-			System.out.println("x="+x+" y="+y);
+			mines_count = parser.nextInt();
+			time_so_far = parser.nextInt();
+			cells_count = parser.nextInt();
 			
-			for(int i=0;i<x;i++){
-			   for(int j=0;j<y;j++){
+			for(int i=0;i<ROWS;i++){
+			   for(int j=0;j<COLUMS;j++){
 			   	int cell_info= parser.nextInt();
 				cells[i][j].set_cell(cell_info);
-				System.out.println("cell: "+x+","+y+" has "+cell_info);
+				System.out.println("cell: "+i+","+j+" has "+cell_info);
 			   }
 			}
-			resetLabels(-1,-1,-1);
+			resetLabels(time_so_far,mines_count,cells_count);
 		    }catch(IOException e){
 		       System.out.println("error in opening save.txt");
 		    }
+		 	startTimer();
 		}
 
 		public void increaseCellCount(){

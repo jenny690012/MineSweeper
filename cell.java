@@ -149,8 +149,10 @@ class Cell extends JLabel implements MouseListener{
 		  else {removeMine();}
 
 		  if(status==MARK){ flag_cell();}
-		  else if(status==UNREVEAL){unflag_cell();}
-		  else{
+		  else if(status==UNREVEAL){
+			  unflag_cell();
+			  addMouseListener(this);
+		  }else{
 		     removeMouseListener(this);
 		     if(numMine!=0){
 		       setIcon(getImageIcon(image_nums[numMine-1]));
