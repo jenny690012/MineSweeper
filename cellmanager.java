@@ -6,6 +6,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.*;
 import java.util.*;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.io.FileWriter;
@@ -13,18 +14,18 @@ import java.io.IOException;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
 import java.io.BufferedReader;
-import java.util.Scanner;
+import java.io.File;
+import java.text.*;
 
 
 class CellManager{
 
-
-                int GRID_SIZE=25;
+                final int GRID_SIZE=25;
+		public static final String SAVE_GAME= "Data/save.txt";
 
 		Cell[][] cells;
 		JPanel game_board;
 		JLabel timer_show,mine_left_show,cell_revealed_show;
-
 
 		int ROWS;
 		int COLUMS;
@@ -33,6 +34,7 @@ class CellManager{
 		int TOTAL_MINE;
 		Timer mine_timer;
 		int time_so_far;
+		statisticsModel model;
 
 		JDialog end;
 		JPanel buttonPanel;
@@ -45,6 +47,8 @@ class CellManager{
 			cells_count=0;
 			TOTAL_MINE=mine;
 			mines_count=TOTAL_MINE;
+			
+			model= new statisticsModel(x,y,mine);
 
 			game_board = new JPanel();
 			game_board.setSize(new Dimension(GRID_SIZE*x,GRID_SIZE*y));
@@ -141,7 +145,8 @@ class CellManager{
 
 		 exit = new JButton("exit");
 		 exit.addActionListener(new ActionListener(){
-		         public void actionPerformed(ActionEvent e){ 
+		         public void actionPerformed(ActionEvent e){
+ 
 				frame.dispatchEvent(new WindowEvent(frame,
 				      WindowEvent.WINDOW_CLOSING));
 				end.dispose();
@@ -270,18 +275,29 @@ class CellManager{
 		    resetLabels(0,TOTAL_MINE,0);
 		}
 
-		public void newGame(){
+		private void newGame(){
+
 		     	for(int i=0;i<ROWS;i++){
 		     	  for(int j=0;j<COLUMS;j++){
 			    	cells[i][j].removeMine();
 			  }
 		     	}
+			
 			startGame();		
 		}
 
+		public void makeNewGame(){
+			resetForEndGame(true);
+			newGame();
+		}
+
+
 		public void resumeFromPause(){
 		    resetLabels(time_so_far,mines_count,cells_count);
-		    if(cells_count!=0) startTimer();
+		    if(isGameStarted()){ 
+			    mine_timer.cancel();
+			    startTimer();
+		    }
 		     for(int i=0;i<ROWS;i++){
 		     	for(int j=0;j<COLUMS;j++){
 			    cells[i][j].resumeGame();
@@ -295,7 +311,7 @@ class CellManager{
 			    	cells[i][j].pauseGame();
 			  }
 		     	}
-		        if(cells_count!=0) mine_timer.cancel();
+		        if(isGameStarted()) mine_timer.cancel();
 		}
 
 		private void resetLabels(int time, int mine, int cells){
@@ -309,6 +325,7 @@ class CellManager{
 		}
 
 		private void startTimer(){
+			
 		        mine_timer = new Timer();
 			mine_timer.scheduleAtFixedRate( new TimerTask(){
 				public void run(){
@@ -319,14 +336,28 @@ class CellManager{
 		}
 
 		public void endGame(boolean win){
+			
+			if(win){
+			  Date t = new Date();
+			  String date_str = 
+				new SimpleDateFormat("dd/MM/yyyy").format(t);
+			  model.update_win(time_so_far,date_str);
+			}else{model.update_lose();}
 
+			resetForEndGame(win);
+			endGameShowGUI(win);
+		}
+
+		private void resetForEndGame(boolean win){
 		     for(int i=0;i<ROWS;i++){
 		     	  for(int j=0;j<COLUMS; j++){
 			  	cells[i][j].endGame(win);
 			  }
-			  if(cells_count!=0) mine_timer.cancel();
-		     }
+			  if(isGameStarted()) mine_timer.cancel();
+		     }		
+		}
 
+		private void endGameShowGUI(boolean win){
 
 		     buttonPanel.remove(1);
 		     if(win){ massage.setText("Congradulation! you Win.");
@@ -336,63 +367,76 @@ class CellManager{
 				buttonPanel.add(restart);
 		     }
 
-		     end.setVisible(true);
+		     end.setVisible(true);		
+		
 		}
 		
 		public void saveGame(){
-	         try{	
-			System.out.println("cellMeneger.savegame is called");
-			FileWriter saved_game= new FileWriter("Data/save.txt");
+		 if(isGameStarted()&&cells_count!=ROWS*COLUMS-TOTAL_MINE){
+	             try{	
 
-			saved_game.write(Integer.toString(mines_count));
-			saved_game.write(String.format("%n"));
-			saved_game.write(Integer.toString(time_so_far));
-			saved_game.write(String.format("%n"));
-			saved_game.write(Integer.toString(cells_count));
-			saved_game.write(String.format("%n"));
+			  FileWriter saved_game= new FileWriter(SAVE_GAME);
 
-			String cell_info;
-			for(int i=0;i<ROWS;i++){
-			    for(int j=0;j<COLUMS;j++){
-			    	cell_info = cells[i][j].output_cell();
-				saved_game.write(cell_info,0,cell_info.length());
-			    }
-			    saved_game.write(String.format("%n"));
-			}
-			saved_game.close();
+			  saved_game.write(Integer.toString(mines_count));
+			  saved_game.write(String.format("%n"));
+			  saved_game.write(Integer.toString(time_so_far));
+			  saved_game.write(String.format("%n"));
+			  saved_game.write(Integer.toString(cells_count));
+			  saved_game.write(String.format("%n"));
 
-		    }catch(IOException e){
-		       System.out.print("Write to lastSave.txt failed");
-		    }
+			  String cell_info;
+			  for(int i=0;i<ROWS;i++){
+			      for(int j=0;j<COLUMS;j++){
+			    	  cell_info = cells[i][j].output_cell();
+				  saved_game.write(cell_info,0,cell_info.length());
+			      }
+			      saved_game.write(String.format("%n"));
+			  }
+			  saved_game.close();
+
+			  mine_timer.cancel();
+
+		      }catch(IOException e){
+		         System.out.print("Write to lastSave.txt failed");
+		      }
+		   }
 		}
 
 		public void importGame(){
 					
 	         try{
-			FileReader saved_game= new FileReader("Data/save.txt");
-			BufferedReader reader = new BufferedReader(saved_game);
-			Scanner parser = new Scanner(reader);
+
+		       File file = new File(SAVE_GAME);
+		       if(file.isFile()){
+			    FileReader saved_game= new FileReader(SAVE_GAME);
+			    BufferedReader reader = new BufferedReader(saved_game);
+			    Scanner parser = new Scanner(reader);
 			
-			mines_count = parser.nextInt();
-			time_so_far = parser.nextInt();
-			cells_count = parser.nextInt();
+			    mines_count = parser.nextInt();
+			    time_so_far = parser.nextInt();
+			    cells_count = parser.nextInt();
 			
-			for(int i=0;i<ROWS;i++){
-			   for(int j=0;j<COLUMS;j++){
-			   	int cell_info= parser.nextInt();
-				cells[i][j].set_cell(cell_info);
-				System.out.println("cell: "+i+","+j+" has "+cell_info);
+			   for(int i=0;i<ROWS;i++){
+			      for(int j=0;j<COLUMS;j++){
+			     	  int cell_info= parser.nextInt();
+				  cells[i][j].set_cell(cell_info);
+			      }
 			   }
-			}
 			resetLabels(time_so_far,mines_count,cells_count);
+			saved_game.close();
+			if(isGameStarted()) startTimer();
+			file.delete();
+		      }else{
+		        startGame();
+		      }
+
 		    }catch(IOException e){
 		       System.out.println("error in opening save.txt");
 		    }
-		 	startTimer();
 		}
 
 		public void increaseCellCount(){
-		    if(cells_count==0)	startTimer();
+		    if(!isGameStarted()) startTimer();
 		    cells_count++;	   
 		    cell_revealed_show.setText(String.valueOf(cells_count));
 		    if(cells_count==ROWS*COLUMS-TOTAL_MINE){
@@ -413,5 +457,11 @@ class CellManager{
 			    mine_left_show.setText(String.valueOf(mines_count));
 		      }
 		}
+
+		public statisticsModel getStatisticsModel(){
+		  return model;
+		}
+
+		public boolean isGameStarted(){ return cells_count!=0;}
 	
 	}

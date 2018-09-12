@@ -12,6 +12,7 @@ import java.util.TimerTask;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.FileReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.BufferedReader;
 import java.util.Scanner;
@@ -36,8 +37,7 @@ class MineSweeper extends WindowAdapter {
 	}
 
 	private void setUpCellManager(int rows, int colums, int mine,boolean saved_game){
-	   frame.setSize(new Dimension(GRID_SIZE*rows+150,GRID_SIZE*colums+150));
-	   System.out.println("M:rows="+(GRID_SIZE*rows+150)+","+"colums="+(GRID_SIZE*colums+150));	   
+	   frame.setSize(new Dimension(GRID_SIZE*rows+150,GRID_SIZE*colums+150));   
 	   manager = new CellManager(rows,colums,mine);
 	   manager.addGameBoardToFrame(frame);
 	   if(saved_game) manager.importGame();
@@ -65,7 +65,7 @@ class MineSweeper extends WindowAdapter {
 
 	  new_game.addActionListener(new ActionListener(){
 	  	public void actionPerformed(ActionEvent e){
-			manager.newGame();
+			manager.makeNewGame();
 		}
 	  });
 	  exit.addActionListener( new ActionListener(){
@@ -88,7 +88,16 @@ class MineSweeper extends WindowAdapter {
 				pause.setText(p_txt);
 			}
 		}	       
-	  });	 
+	  });
+
+	 statistics.addActionListener( new ActionListener(){
+	 	public void actionPerformed(ActionEvent e){
+			manager.pauseGame();
+			new statisticsFrame(manager.getStatisticsModel(),
+				MineSweeper.this);
+			manager.resumeFromPause();
+		}
+	 }); 
 
 
 
@@ -104,18 +113,20 @@ class MineSweeper extends WindowAdapter {
 	  frame.setJMenuBar(menuBar);	
 	}
 
-	void showSaveGameDialog(){
+	private void showSaveGameDialog(){
 
 		    manager.pauseGame();
 		    if(save_on_exiting_game){
-		    	    manager.saveGame();
+		    	    if(manager.isGameStarted()) manager.saveGame();
 			    frame.dispose();
 			    System.exit(0);
 		    }else{
 
-		     JDialog exit_dialog= new JDialog(frame,"",Dialog.ModalityType.DOCUMENT_MODAL);
+		     JDialog exit_dialog= new JDialog(frame,"",
+				     Dialog.ModalityType.DOCUMENT_MODAL);
 
-		     int a=JOptionPane.showConfirmDialog(exit_dialog,"Do you want to save this game?");  
+		     int a=JOptionPane.showConfirmDialog(exit_dialog,
+				     "Do you want to save this game?");  
 			if(a==JOptionPane.YES_OPTION){  
 			    manager.saveGame();
 			    frame.dispose();
@@ -131,42 +142,52 @@ class MineSweeper extends WindowAdapter {
 
 	private void showStartGameDialog(){
 
-		    
+		    File saved_game = new File("Data/save.txt");     
+
 		    if(continue_on_saved_game){
 			setUpCellManager(ROWS,COLUMS,TOTAL_MINE,true);
-		    }else{
+		    }else if(saved_game.isFile()){
 
-		     JDialog start_dialog= new JDialog(frame,"",Dialog.ModalityType.DOCUMENT_MODAL);
+		     JDialog start_dialog= new JDialog(frame,"",
+				     Dialog.ModalityType.DOCUMENT_MODAL);
 
-		     int a=JOptionPane.showConfirmDialog(start_dialog,"Do you want to continue with saved game?");  
+		     
+		     int a=JOptionPane.showConfirmDialog(start_dialog,
+				     "Do you want to continue with saved game?");  
 			if(a==JOptionPane.YES_OPTION){  
 				setUpCellManager(ROWS,COLUMS,TOTAL_MINE,true);
    			}else if(a==JOptionPane.NO_OPTION){
+				saved_game.delete();
 				setUpCellManager(ROWS,COLUMS,TOTAL_MINE,false);			    
 			}else {
-			  frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+				      System.exit(0);
 			}
+	            
+		   }else{
+			setUpCellManager(ROWS,COLUMS,TOTAL_MINE,false);			   
 		   }
 	}
 
 
 	private void updateOption(){
 	  try{
-	      FileReader option= new FileReader("options.txt");
-	      BufferedReader reader = new BufferedReader(option);
-	      Scanner parser = new Scanner(reader);
+	      
+	      	FileReader option= new FileReader("Data/options.txt");
+	      	BufferedReader reader = new BufferedReader(option);
+	      	Scanner parser = new Scanner(reader);
 	
-	      ROWS= parser.nextInt();
-	      COLUMS= parser.nextInt();
-	      TOTAL_MINE= parser.nextInt();
-	      continue_on_saved_game= parser.nextBoolean();
-	      save_on_exiting_game= parser.nextBoolean();
-	      option.close();
+	      	ROWS= parser.nextInt();
+	      	COLUMS= parser.nextInt();
+	      	TOTAL_MINE= parser.nextInt();
+	      	continue_on_saved_game= parser.nextBoolean();
+	      	save_on_exiting_game= parser.nextBoolean();
+	      	option.close();
+	      
 
 	     }catch(IOException e){
-	  	ROWS= 10;
-		COLUMS= 20;
-		TOTAL_MINE= ROWS*COLUMS/5;
+	  	ROWS= 16;
+		COLUMS= 16;
+		TOTAL_MINE= 40;
 		continue_on_saved_game=false;
 		save_on_exiting_game= false;
 	     }
@@ -174,7 +195,7 @@ class MineSweeper extends WindowAdapter {
 
 
 	public void windowClosing(WindowEvent e){
-	    showSaveGameDialog();
+	     showSaveGameDialog();
 	}
 
 	public void resumeFromPause(){ manager.resumeFromPause();}
@@ -185,7 +206,7 @@ class MineSweeper extends WindowAdapter {
 	  TOTAL_MINE = mine;
 
 	  frame.getContentPane().removeAll();
-	  setUpCellManager(ROWS,COLUMS,TOTAL_MINE,false);//this creates a new cellmanager
+	  setUpCellManager(ROWS,COLUMS,TOTAL_MINE,false);
 	  setUpMenuBar();
 	}
 

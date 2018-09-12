@@ -180,17 +180,14 @@ class Cell extends JLabel implements MouseListener{
 		public void mouseEntered(MouseEvent evt){}
 		public void mousePressed(MouseEvent evt){
 		
-			System.out.println("a mouse click is received");
 
 			if(SwingUtilities.isRightMouseButton(evt)){
-				System.out.println("a right click, status="+status);
 		              if(status==MARK){
 				      unflag_cell();
 			      }else if(status==UNREVEAL){
 				      flag_cell();
 			      }
 			}else{
-				System.out.println("a left click, status="+status);
 			     if(status==UNREVEAL){
 				if(mine){manager.endGame(false);}
 				else{ reveal();}

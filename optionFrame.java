@@ -18,6 +18,7 @@ import java.util.Scanner;
 
 class optionFrame implements ActionListener{
 
+	final String OPTION = "Data/options.txt";
 	final String BEGINNER= "<html>Beginnner<br>10 mines<br>9x9 grids</html>";
 	final String INTERMEDIATE = "<html>Intermediate<br>40 mines<br>16x16 grids</html>";
 	final String ADVANCED = "<html>Advanced<br>99 mines<br>16x30 grids</html>";
@@ -64,7 +65,7 @@ class optionFrame implements ActionListener{
    public optionFrame(MineSweeper ms){
 	
 	this.ms=ms;
-	File options = new File("options.txt");
+	File options = new File(OPTION);
 	if(options.exists() && !options.isDirectory()){
 	  try{
 		FileReader option = new FileReader(options);
@@ -255,7 +256,6 @@ class optionFrame implements ActionListener{
 
 	  
           String command = e.getActionCommand();
-	  System.out.println("command="+command);
 	  if(command.equals(HEIGHT_LABEL)){
 	       checkTextfields(true,false,true);
 	  }else if(command.equals(WIDTH_LABEL)){
@@ -339,7 +339,7 @@ class optionFrame implements ActionListener{
 		  if(textfields_correct){
 			
 		   try{ 
-   			FileWriter options = new FileWriter("options.txt");
+   			FileWriter options = new FileWriter(OPTION);
 			options.write(Integer.toString(new_cell_height));
 			options.write(String.format("%n"));
 			options.write(Integer.toString(new_cell_width));
@@ -383,9 +383,6 @@ class optionFrame implements ActionListener{
 	if(width) width_check= widthParseInt();
 	if(mine) mine_check= mineParseInt();
 
-	System.out.println("mine_check="+mine_check);
-	System.out.println("height_check="+height_check);
-	System.out.println("width_check="+width_check);
 	return mine_check&&height_check&&width_check;
 
    }
