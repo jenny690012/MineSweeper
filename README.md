@@ -10,7 +10,7 @@ You can click on the menu item "Options" of the menu "Game" to change level and 
 You can also click on the menu item "Statistics" to view your game record and reset record.
 ![minesweeper2](https://user-images.githubusercontent.com/29102031/45424210-a95bc900-b64a-11e8-8ba3-5a7bb67acc95.PNG)
 
-##Things to improve:
+## Things to improve:
 1. Make Statistics dialog's layout better.
 2. Add more details to winning and losing dialog by showing the statistics of the latest played game.
 3. Let user to play the game with keyboard.
